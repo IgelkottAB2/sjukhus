@@ -1,31 +1,236 @@
+
 <!doctype html>
 <html lang="sv">
 <head>
- <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script defer src="config.js"></script>
-<script defer src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-<script defer src="app.js"></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Igelkotts Sjukhuskedja</title>
+
+  <link rel="stylesheet" href="style.css">
+
+  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script defer src="config.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+  <script defer src="app.js"></script>
 </head>
 <body>
-<header class="topbar"><a class="brand" href="index.html"><span class="brand-mark">✚</span><span>Igelkotts <b>Sjukhuskedja</b><small>TESTSYSTEM · INGA RIKTIGA PATIENTUPPGIFTER</small></span></a><div id="accountArea"><span id="signedInAs"></span><button id="logoutBtn" class="button button-quiet hidden">Logga ut</button></div></header>
+<header class="topbar">
+  <a class="brand" href="index.html">
+    <span class="brand-mark">✚</span>
+    <span>Igelkotts <b>Sjukhuskedja</b>
+      <small>TESTSYSTEM · INGA RIKTIGA PATIENTUPPGIFTER</small>
+    </span>
+  </a>
+  <div id="accountArea">
+    <span id="signedInAs"></span>
+    <button id="logoutBtn" class="button button-quiet hidden">Logga ut</button>
+  </div>
+</header>
+
 <main class="page-wrap">
   <section id="authPanel" class="auth-layout">
-    <div class="hero-panel"><span class="eyebrow">VÄLKOMMEN</span><h1>Vård och service,<br><em>samlat på ett ställe.</em></h1><p>Logga in för att se bokningar, vaccinationsschema och apotek i testversionen.</p><div class="hero-points"><span>✓ Digital kölapp</span><span>✓ Bokningar och schema</span><span>✓ Säker testinloggning</span></div></div>
-    <div class="panel auth-card"><div class="tab-row"><button class="tab active" data-auth-tab="login">Logga in</button><button class="tab" data-auth-tab="signup">Skapa konto</button></div>
-      <form id="loginForm" class="stack"><h2>Logga in</h2><label>E-post<input type="email" name="email" autocomplete="email" required></label><label>Lösenord<input type="password" name="password" autocomplete="current-password" required minlength="6"></label><button class="button button-primary" type="submit">Logga in</button></form>
-      <form id="signupForm" class="stack hidden"><h2>Skapa testkonto</h2><label>Fullständigt namn<input name="full_name" autocomplete="name" required></label><label>E-post<input type="email" name="email" autocomplete="email" required></label><label>Lösenord (minst 6 tecken)<input type="password" name="password" minlength="6" required></label><button class="button button-primary" type="submit">Skapa konto</button><p class="muted small">Om e-postbekräftelse är aktiverad i Supabase måste kontot bekräftas först.</p></form>
+    <div class="hero-panel">
+      <span class="eyebrow">VÄLKOMMEN</span>
+      <h1>Vård och service,<br><em>samlat på ett ställe.</em></h1>
+      <p>Logga in för att se bokningar, vaccinationsschema och apotek i testversionen.</p>
+      <div class="hero-points">
+        <span>✓ Digital kölapp</span>
+        <span>✓ Bokningar och schema</span>
+        <span>✓ Säker testinloggning</span>
+      </div>
+    </div>
+
+    <div class="panel auth-card">
+      <div class="tab-row">
+        <button class="tab active" data-auth-tab="login">Logga in</button>
+        <button class="tab" data-auth-tab="signup">Skapa konto</button>
+      </div>
+
+      <form id="loginForm" class="stack">
+        <h2>Logga in</h2>
+        <label>E-post
+          <input type="email" name="email" autocomplete="email" required>
+        </label>
+        <label>Lösenord
+          <input type="password" name="password" autocomplete="current-password" required minlength="6">
+        </label>
+        <button class="button button-primary" type="submit">Logga in</button>
+      </form>
+
+      <form id="signupForm" class="stack hidden">
+        <h2>Skapa testkonto</h2>
+        <label>Fullständigt namn
+          <input name="full_name" autocomplete="name" required>
+        </label>
+        <label>E-post
+          <input type="email" name="email" autocomplete="email" required>
+        </label>
+        <label>Lösenord (minst 6 tecken)
+          <input type="password" name="password" minlength="6" required>
+        </label>
+        <button class="button button-primary" type="submit">Skapa konto</button>
+        <p class="muted small">Om e-postbekräftelse är aktiverad i Supabase måste kontot bekräftas först.</p>
+      </form>
+
       <p id="authMessage" class="notice hidden" role="status"></p>
     </div>
   </section>
+
   <section id="appPanel" class="hidden">
-    <div class="welcome-row"><div><span class="eyebrow">KUNDPPORTAL</span><h1>Hej, <span id="customerName">välkommen</span></h1><p class="muted">Här hittar du dina ärenden hos Igelkotts Sjukhuskedja.</p></div><a class="button button-outline" href="staff.html">Personaldator ↗</a></div>
-    <nav class="main-tabs" aria-label="Kundportalens flikar"><button class="main-tab active" data-view="home">Översikt</button><button class="main-tab" data-view="queue">Information & kö</button><button class="main-tab" data-view="vaccine">Vaccin · Schema</button><button class="main-tab" data-view="pharmacy">Apoteket</button></nav>
-    <section class="view" id="view-home"><div class="tile-grid"><button class="service-tile" data-open-view="queue"><span class="tile-icon green">ⓘ</span><b>Information för besökare</b><span>Ta en digital kölapp via QR-koden vid disken.</span></button><button class="service-tile" data-open-view="vaccine"><span class="tile-icon blue">＋</span><b>Vaccinbuss & schema</b><span>Se bokningar och visa QR-kod när du är framme.</span></button><button class="service-tile" data-open-view="pharmacy"><span class="tile-icon purple">✚</span><b>Apoteket</b><span>Aktuella recept och tidigare kvitton.</span></button></div><div class="notice notice-warn"><b>Viktig information</b><br>Detta är en fiktiv demonstration. Använd inte riktiga patientuppgifter, riktiga recept eller för verklig vård.</div></section>
-    <section class="view hidden" id="view-queue"><div class="section-heading"><div><span class="eyebrow">INFORMATIONSDISKEN</span><h2>Information för besökare</h2><p class="muted">Skanna QR-koden som finns vid informationsdisken för att få en digital kölapp.</p></div><span class="tile-icon green large">ⓘ</span></div><div class="two-col"><div class="panel"><h3>Ta kölapp</h3><p class="muted">Kameran kan läsa en QR-kod som personalen har skapat för informationsdisken.</p><button id="startDeskScan" class="button button-primary">Öppna QR-läsare</button><video id="deskVideo" class="scanner-video hidden" playsinline></video><div id="deskScanStatus" class="notice hidden"></div><div id="queueTicket" class="ticket hidden"><span class="eyebrow">DIN DIGITALA KÖLAPP</span><strong id="queueNumber">—</strong><h3 id="queueAhead">— PERSONER FRAMFÖR DIG</h3><p id="queueState" class="muted">Väntar på informationsdisken</p><div id="queueRoom" class="room-banner hidden"></div></div></div><div class="panel"><h3>Din köstatus</h3><p class="muted">Din kölapp uppdateras automatiskt. När det är din tur visas en tydlig signal.</p><div id="turnNotice" class="turn-notice hidden"><span class="turn-icon">✓</span><strong>DIN TUR</strong><span>Gå fram till informationsdisken.</span></div><p id="queueHelp" class="small muted">Ingen aktiv kölapp just nu.</p></div></div></section>
-    <section class="view hidden" id="view-vaccine"><div class="section-heading"><div><span class="eyebrow">IGELKOTTS VACCIN</span><h2>Vaccinbuss & schema</h2><p class="muted">Se dina testbokningar och visa en engångs-QR-kod när du är framme.</p></div><span class="tile-icon blue large">＋</span></div><div class="panel"><div class="inline-heading"><div><h3>Mitt schema</h3><p class="muted">Välj en bokad vaccination för att visa knappen FRAMME.</p></div><button id="refreshVaccine" class="button button-outline">Uppdatera</button></div><div id="vaccineList" class="item-list"><p class="muted">Laddar schema …</p></div></div><div class="panel"><h3>Testbokning</h3><form id="vaccineBookingForm" class="form-grid"><label>Vaccin<select name="vaccine_name" required><option value="">Välj vaccin</option><option>HPV</option><option>TBE</option><option>Bältros</option></select></label><label>Busshållplats<input name="stop_name" placeholder="Ex. Hässleholm, centrum" required></label><label>Datum<input type="date" name="appointment_date" required></label><label>Tid<input type="time" name="appointment_time" required></label><button class="button button-primary" type="submit">Boka testtid</button></form><p class="small muted">Vaccinationsschemat är endast en demo. Verkliga vaccinationsintervall måste bedömas av vårdpersonal.</p></div></section>
-    <section class="view hidden" id="view-pharmacy"><div class="section-heading"><div><span class="eyebrow">IGELKOTTS APOTEK</span><h2>Apoteket</h2><p class="muted">Recept och kvitton i den fiktiva testmiljön.</p></div><span class="tile-icon purple large">✚</span></div><div class="panel"><div class="tab-row pharmacy-tabs"><button class="tab active" data-pharmacy-tab="receipts">KVITTON</button><button class="tab" data-pharmacy-tab="prescriptions">AKTUELLA RECEPT</button></div><div id="pharmacyReceipts" class="item-list"><p class="muted">Laddar kvitton …</p></div><div id="pharmacyPrescriptions" class="item-list hidden"><p class="muted">Laddar recept …</p></div><p class="small muted">QR-koder visas bara för aktuella, ej uthämtade testrecept. När apotekspersonalen godkänner en utlämning tas QR-token bort ur databasen. Kvitton visar namn och sexsiffrig returkod.</p></div></section>
+    <div class="welcome-row">
+      <div>
+        <span class="eyebrow">KUNDPORTAL</span>
+        <h1>Hej, <span id="customerName">välkommen</span></h1>
+        <p class="muted">Här hittar du dina ärenden hos Igelkotts Sjukhuskedja.</p>
+      </div>
+      <a class="button button-outline" href="staff.html">Personaldator ↗</a>
+    </div>
+
+    <nav class="main-tabs" aria-label="Kundportalens flikar">
+      <button class="main-tab active" data-view="home">Översikt</button>
+      <button class="main-tab" data-view="queue">Information & kö</button>
+      <button class="main-tab" data-view="vaccine">Vaccin · Schema</button>
+      <button class="main-tab" data-view="pharmacy">Apoteket</button>
+    </nav>
+
+    <section class="view" id="view-home">
+      <div class="tile-grid">
+        <button class="service-tile" data-open-view="queue">
+          <span class="tile-icon green">ⓘ</span>
+          <b>Information för besökare</b>
+          <span>Ta en digital kölapp via QR-koden vid disken.</span>
+        </button>
+        <button class="service-tile" data-open-view="vaccine">
+          <span class="tile-icon blue">＋</span>
+          <b>Vaccinbuss & schema</b>
+          <span>Se bokningar och visa QR-kod när du är framme.</span>
+        </button>
+        <button class="service-tile" data-open-view="pharmacy">
+          <span class="tile-icon purple">✚</span>
+          <b>Apoteket</b>
+          <span>Aktuella recept och tidigare kvitton.</span>
+        </button>
+      </div>
+      <div class="notice notice-warn">
+        <b>Viktig information</b><br>
+        Detta är en fiktiv demonstration. Använd inte riktiga patientuppgifter,
+        riktiga recept eller för verklig vård.
+      </div>
+    </section>
+
+    <section class="view hidden" id="view-queue">
+      <div class="section-heading">
+        <div>
+          <span class="eyebrow">INFORMATIONSDISKEN</span>
+          <h2>Information för besökare</h2>
+          <p class="muted">Skanna QR-koden som finns vid informationsdisken för att få en digital kölapp.</p>
+        </div>
+        <span class="tile-icon green large">ⓘ</span>
+      </div>
+
+      <div class="two-col">
+        <div class="panel">
+          <h3>Ta kölapp</h3>
+          <p class="muted">Kameran kan läsa en QR-kod som personalen har skapat för informationsdisken.</p>
+          <button id="startDeskScan" class="button button-primary">Öppna QR-läsare</button>
+          <video id="deskVideo" class="scanner-video hidden" playsinline></video>
+          <canvas id="deskCanvas" class="hidden"></canvas>
+          <div id="deskScanStatus" class="notice hidden"></div>
+
+          <div id="queueTicket" class="ticket hidden">
+            <span class="eyebrow">DIN DIGITALA KÖLAPP</span>
+            <strong id="queueNumber">—</strong>
+            <h3 id="queueAhead">— PERSONER FRAMFÖR DIG</h3>
+            <p id="queueState" class="muted">Väntar på informationsdisken</p>
+            <div id="queueRoom" class="room-banner hidden"></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h3>Din köstatus</h3>
+          <p class="muted">Din kölapp uppdateras automatiskt. När det är din tur visas en tydlig signal.</p>
+          <div id="turnNotice" class="turn-notice hidden">
+            <span class="turn-icon">✓</span>
+            <strong>DIN TUR</strong>
+            <span>Gå fram till informationsdisken.</span>
+          </div>
+          <p id="queueHelp" class="small muted">Ingen aktiv kölapp just nu.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="view hidden" id="view-vaccine">
+      <div class="section-heading">
+        <div>
+          <span class="eyebrow">IGELKOTTS VACCIN</span>
+          <h2>Vaccinbuss & schema</h2>
+          <p class="muted">Se dina testbokningar och visa en engångs-QR-kod när du är framme.</p>
+        </div>
+        <span class="tile-icon blue large">＋</span>
+      </div>
+
+      <div class="panel">
+        <div class="inline-heading">
+          <div>
+            <h3>Mitt schema</h3>
+            <p class="muted">Välj en bokad vaccination för att visa knappen FRAMME.</p>
+          </div>
+          <button id="refreshVaccine" class="button button-outline">Uppdatera</button>
+        </div>
+        <div id="vaccineList" class="item-list"><p class="muted">Laddar schema …</p></div>
+      </div>
+
+      <div class="panel">
+        <h3>Testbokning</h3>
+        <form id="vaccineBookingForm" class="form-grid">
+          <label>Vaccin
+            <select name="vaccine_name" required>
+              <option value="">Välj vaccin</option>
+              <option>HPV</option>
+              <option>TBE</option>
+              <option>Bältros</option>
+            </select>
+          </label>
+          <label>Busshållplats
+            <input name="stop_name" placeholder="Ex. Hässleholm, centrum" required>
+          </label>
+          <label>Datum<input type="date" name="appointment_date" required></label>
+          <label>Tid<input type="time" name="appointment_time" required></label>
+          <button class="button button-primary" type="submit">Boka testtid</button>
+        </form>
+        <p class="small muted">Vaccinationsschemat är endast en demo. Verkliga vaccinationsintervall måste bedömas av vårdpersonal.</p>
+      </div>
+    </section>
+
+    <section class="view hidden" id="view-pharmacy">
+      <div class="section-heading">
+        <div>
+          <span class="eyebrow">IGELKOTTS APOTEK</span>
+          <h2>Apoteket</h2>
+          <p class="muted">Recept och kvitton i den fiktiva testmiljön.</p>
+        </div>
+        <span class="tile-icon purple large">✚</span>
+      </div>
+
+      <div class="panel">
+        <div class="tab-row pharmacy-tabs">
+          <button class="tab active" data-pharmacy-tab="receipts">KVITTON</button>
+          <button class="tab" data-pharmacy-tab="prescriptions">AKTUELLA RECEPT</button>
+        </div>
+        <div id="pharmacyReceipts" class="item-list"><p class="muted">Laddar kvitton …</p></div>
+        <div id="pharmacyPrescriptions" class="item-list hidden"><p class="muted">Laddar recept …</p></div>
+        <p class="small muted">QR-koder visas bara för aktuella, ej uthämtade testrecept. När apotekspersonalen godkänner en utlämning tas QR-token bort ur databasen. Kvitton visar namn och sexsiffrig returkod.</p>
+      </div>
+    </section>
   </section>
+
   <div id="globalMessage" class="notice hidden" role="status"></div>
 </main>
-<footer class="site-footer"><span>© Igelkotts Sjukhuskedja · Testversion</span><span>Inga riktiga betalningar eller vårdåtgärder</span></footer>
-</body></html>
+
+<footer class="site-footer">
+  <span>© Igelkotts Sjukhuskedja · Testversion</span>
+  <span>Inga riktiga betalningar eller vårdåtgärder</span>
+</footer>
+</body>
+</html>
