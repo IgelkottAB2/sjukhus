@@ -15,6 +15,7 @@
   let queueTimer = null;
   let deskStream = null;
   let deskScanActive = false;
+  let vaccineBookingBusy = false;
 
   const alertedQueues = new Set();
 
@@ -606,6 +607,30 @@
       const actions = document.createElement('div');
       actions.className = 'item-actions';
 
+      if (booking.status === 'booked') {
+        const cancel = document.createElement('button');
+        cancel.className = 'button button-outline';
+        cancel.textContent = 'Avboka';
+        cancel.onclick = async () => {
+          if (!confirm('Vill du avboka denna testtid?')) return;
+          cancel.disabled = true;
+          cancel.textContent = 'Avbokar…';
+          const { data, error } = await db.from('vaccine_bookings')
+            .update({ status: 'cancelled', qr_token: null })
+            .eq('id', booking.id).eq('patient_id', currentUser.id)
+            .eq('status', 'booked').select('id');
+          if (error || !data?.length) {
+            say('globalMessage', 'Avbokningen misslyckades: ' + (error?.message || 'Tiden är inte längre aktiv.'), true);
+            cancel.disabled = false;
+            cancel.textContent = 'Avboka';
+            return;
+          }
+          say('globalMessage', 'Testtiden är avbokad.');
+          await loadVaccines();
+        };
+        actions.append(cancel);
+      }
+
       if (booking.status === 'booked' && booking.qr_token) {
         const button = document.createElement('button');
         button.className = 'button button-primary';
@@ -660,27 +685,53 @@
 
   async function bookVaccine(event) {
     event.preventDefault();
-
-    const form = new FormData(event.currentTarget);
-    const token = crypto.randomUUID();
-
-    const { error } = await db.from('vaccine_bookings').insert({
-      patient_id: currentUser.id,
-      vaccine_name: form.get('vaccine_name'),
-      stop_name: form.get('stop_name'),
-      appointment_date: form.get('appointment_date'),
-      appointment_time: form.get('appointment_time'),
-      status: 'booked',
-      qr_token: token
-    });
-
-    if (error) {
-      return say('globalMessage', 'Bokningen misslyckades: ' + error.message, true);
+    if (vaccineBookingBusy || !currentUser) return;
+    const element = event.currentTarget;
+    const button = element.querySelector('[type="submit"]');
+    const original = button?.textContent;
+    vaccineBookingBusy = true;
+    if (button) { button.disabled = true; button.textContent = 'Bokar…'; }
+    say('globalMessage', 'Bokar din testtid…');
+    try {
+      const form = new FormData(element);
+      const values = {
+        patient_id: currentUser.id,
+        vaccine_name: form.get('vaccine_name'),
+        stop_name: form.get('stop_name'),
+        appointment_date: form.get('appointment_date'),
+        appointment_time: form.get('appointment_time'),
+        status: 'booked',
+        qr_token: crypto.randomUUID()
+      };
+      const { data: existing, error: checkError } = await db.from('vaccine_bookings')
+        .select('id').eq('patient_id', currentUser.id)
+        .eq('vaccine_name', values.vaccine_name).eq('stop_name', values.stop_name)
+        .eq('appointment_date', values.appointment_date)
+        .eq('appointment_time', values.appointment_time).eq('status', 'booked').limit(1);
+      if (checkError) throw checkError;
+      if (existing?.length) {
+        say('globalMessage', 'Du har redan bokat exakt samma testtid. Se SCHEMA.', true);
+        await loadVaccines();
+        return;
+      }
+      const { error } = await db.from('vaccine_bookings').insert(values);
+      if (error) {
+        if (error.code === '23505') {
+          say('globalMessage', 'Samma testtid är redan bokad. Se SCHEMA.', true);
+          await loadVaccines();
+          return;
+        }
+        throw error;
+      }
+      element.reset();
+      say('globalMessage', 'Klart! Testtiden är bokad och visas under SCHEMA.');
+      await loadVaccines();
+    } catch (error) {
+      say('globalMessage', 'Bokningen misslyckades: ' + error.message, true);
+    } finally {
+      vaccineBookingBusy = false;
+      if (button) { button.disabled = false; button.textContent = original; }
     }
-
-    event.currentTarget.reset();
-    say('globalMessage', 'Testtiden är bokad. Den visas nu under SCHEMA.');
-    await loadVaccines();
   }
 
   async function loadPharmacy() {
